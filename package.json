@@ -1,0 +1,71 @@
+{
+	"name": "monkey-patch",
+	"displayName": "MonkeyPatch",
+	"description": "Inject custom javascript into vscode",
+	"version": "0.0.1",
+	"publisher": "iocave",
+	"author": {
+		"email": "matej.knopp@gmail.com",
+		"name": "Matej Knopp"
+	},
+	"categories": [
+		"Other"
+	],
+	"engines": {
+		"vscode": "^1.31.0"
+	},
+	"activationEvents": [
+		"*"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "extension.enable",
+				"title": "Enable MonkeyPatch"
+			},
+			{
+				"command": "extension.disable",
+				"title": "Disable MonkeyPatch"
+			}
+		],
+		"configuration": {
+			"type" : "object",
+			"title" : "MonkeyPatch configuration",
+			"properties": {
+				"monkeyPatch.folderMap": {
+					"type": "object",
+					"title": "Folder map",
+					"markdownDescription": "Maps root package name to a folder on disk.\n\nFor example:\n\n ```\n{\n \"mypackage\" : \"~/.vscode/mypackage/\"\n}\n```\n means `require('mypackage/module')` will reference ~/.vscode/mypackage/module.js"
+				},
+				"monkeyPatch.mainProcessModules": {
+					"type" : "array",
+					"title": "Main process modules",
+					"markdownDescription": "Name of modules to be loaded in VSCode main process.\n\nThe modules root packages need to be declared in `monkeyPatch.folderMap`."
+				},
+				"monkeyPatch.browserModules": {
+					"type" : "array",
+					"title": "Browser modules",
+					"markdownDescription": "Name of modules to be loaded in VSCode browser process.\n\nThe modules root packages need to be declared in `monkeyPatch.folderMap`."
+				}
+			}
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "yarn run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"postinstall": "node ./node_modules/vscode/bin/install",
+		"test": "yarn run compile && node ./node_modules/vscode/bin/test"
+	},
+	"devDependencies": {
+		"@types/mocha": "^2.2.42",
+		"@types/node": "^10.12.21",
+		"tslint": "^5.12.1",
+		"typescript": "^3.3.1",
+		"vscode": "^1.1.28"
+	},
+	"dependencies": {
+		"sudo-prompt": "^8.2.5"
+	}
+}
