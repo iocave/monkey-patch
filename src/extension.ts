@@ -18,6 +18,11 @@ class Extension {
 		if (this.active) {
 			this.checkState();
 		}
+		context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(e => {
+			if (e.affectsConfiguration('monkeyPatch.')) {
+				this.configurationChanged();
+			}
+		}));
 	}
 
 	private async checkState() {
@@ -83,19 +88,67 @@ class Extension {
 	}
 
 	updateConfiguration() {
-		this.configuration.updateFolderMap(new Map(Object.entries({
-			"monkey-static": path.join(this.pathManager.extensionDataPath, "modules"),
-			"def": "path2"
-		})));
 
-		this.configuration.updateMainProcessModules(new Set(["monkey-static/entrypoint-main"]));
-		this.configuration.updateBrowserModules(new Set(["monkey-static/entrypoint-browser"]));
+		let cfg = vscode.workspace.getConfiguration("monkeyPatch");
+
+		let folderMap = new Map(Object.entries({
+			"monkey-static": path.join(this.pathManager.extensionDataPath, "modules"),
+		}));
+
+		let map = cfg.get("folderMap");
+		if (map instanceof Object) {
+			Object.entries(map).forEach(entry => {
+				folderMap.set(entry[0], entry[1]);
+			});
+		}
+
+		this.configuration.updateFolderMap(folderMap);
+
+		let modules = cfg.get("mainProcessModules");
+
+		let mainProcessModules = new Set(["monkey-static/entrypoint-main"]);
+		if (modules instanceof Array) {
+			modules.forEach(element => {
+				mainProcessModules.add(element);
+			});
+		}
+
+		this.configuration.updateMainProcessModules(mainProcessModules);
+
+		//
+
+		modules = cfg.get("browserModules");
+
+		let browserModules = new Set(["monkey-static/entrypoint-browser"]);
+		if (modules instanceof Array) {
+			modules.forEach(element => {
+				browserModules.add(element);
+			});
+		}
+
+		this.configuration.updateBrowserModules(browserModules);
 	}
 
 	updateGeneratedFiles() {
 		this.updateConfiguration();
 		this.configuration.writeMainProcessEntrypoint(this.pathManager.mainProcessEntrypointPath);
 		this.configuration.writeBrowserEntrypoint(this.pathManager.browserEntrypointPath);
+	}
+
+	configurationChanged() {
+		let browserModules = this.configuration.resolvedBrowserModules();
+		let mainProcessModules = this.configuration.resolvedMainProcessModules();
+		this.updateConfiguration();
+		this.updateGeneratedFiles();
+		if (!Extension.eqSet(mainProcessModules, this.configuration.resolvedMainProcessModules())) {
+			vscode.window.showInformationMessage("MonkeyPatch configuration has changed. Please RESTART (not just reload) your VSCode instance!", "Okay");
+		} else if (!Extension.eqSet(browserModules, this.configuration.resolvedBrowserModules())) {
+			vscode.window.showInformationMessage("MonkeyPatch configuration has changed. Please reload your VSCode window!", "Okay");
+		}
+	}
+
+	private static eqSet(s1: Set<any>, s2: Set<any>): boolean {
+		return s1.size === s2.size && [...s1].every(value => s2.has(value));
 	}
 
 	private async install() {
@@ -140,7 +193,7 @@ class Extension {
 					"\n\t<script src=\"workbench.js\"></script>",
 			})));
 
-		return script.commit(this.needRoot());
+		return script.commit(this.needsRoot());
 	}
 
 	private toFileUri(filePath: string): string {
@@ -160,20 +213,20 @@ class Extension {
 			script.rm(this.pathManager.bootstrapPath);
 			script.move(this.pathManager.bootstrapBackupPath, this.pathManager.bootstrapPath);
 			script.rm(this.pathManager.workbenchHtmlReplacementPath);
-			return script.commit(this.needRoot());
+			return script.commit(this.needsRoot());
 		}
 	}
 
-	private needRoot() {
-		let needRoot = false;
+	private needsRoot() {
+		let needsRoot = false;
 		try {
 			const testFile = path.join(this.pathManager.installationPath, ".testFile");
 			fs.writeFileSync(testFile, "");
 			fs.unlinkSync(testFile);
 		} catch (e) {
-			needRoot = true;
+			needsRoot = true;
 		}
-		return needRoot;
+		return needsRoot;
 	}
 
 	private configuration = new Configuration();
@@ -182,7 +235,7 @@ class Extension {
 }
 
 
-let extension : Extension;
+let extension: Extension;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed

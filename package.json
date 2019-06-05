@@ -31,7 +31,7 @@
 		],
 		"configuration": {
 			"type" : "object",
-			"title" : "MonkeyPatch configuration",
+			"title" : "MonkeyPatch",
 			"properties": {
 				"monkeyPatch.folderMap": {
 					"type": "object",

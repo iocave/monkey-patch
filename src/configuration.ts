@@ -1,4 +1,6 @@
 import * as fs from 'fs';
+import { homedir } from 'os';
+import * as path from 'path';
 
 export class Configuration {
 
@@ -8,8 +10,16 @@ export class Configuration {
 		this.folderMap = new Map<string, string>();
 	}
 
-	private folderMapToString() {
-		return Array.from(this.folderMap).map(([key, value]) => `        "${key}" : "${value}"`).join(",\n");
+	private folderMapToString(indent : String) {
+		return Array.from(this.folderMap).map(([key, value]) => `${indent}"${key}" : "${this.expandHome(value)}"`).join(",\n");
+	}
+
+	private expandHome(p : String) {
+		if (p.startsWith("~/")) {
+			return path.join(homedir(), p.slice(2));
+		} else {
+			return p;
+		}
 	}
 
 	private mainProcessModulesToString() {
@@ -33,11 +43,38 @@ export class Configuration {
 		this.browserModules = modules;
 	}
 
+	resolvedMainProcessModules() : Set<string> {
+		return this.resolveModules(this.mainProcessModules);
+	}
+
+	resolvedBrowserModules() : Set<string> {
+		return this.resolveModules(this.browserModules);
+	}
+
+	private resolveModules(modules: Set<string>) : Set<string> {
+		let folderMapLC = new Map();
+		this.folderMap.forEach((value, key) => {
+			folderMapLC.set(key.toLowerCase(), value);
+		});
+		let res = new Set<string>();
+		modules.forEach(module => {
+			let parts = module.split("/");
+			if (parts.length > 0) {
+				let part = folderMapLC.get(parts[0].toLocaleLowerCase());
+				if (part !== undefined) {
+					parts[0] = part;
+				}
+			}
+			res.add(parts.join("/"));
+		});
+		return res;
+	}
+
 	writeMainProcessEntrypoint(path: string) {
 		let data = `\
 require.config({
     paths: {
-${this.folderMapToString()}
+${this.folderMapToString('        ')}
     }
 });
 
@@ -60,7 +97,7 @@ _bootstrapWindow.load = function(modulePaths, resultCallback, options) {
 		if (prevBeforeLoaderConfig && typeof prevBeforeLoaderConfig === 'function')
 			prevBeforeLoaderConfig(configuration, loaderConfig);
 		loaderConfig.paths = {
-			${this.folderMapToString()}
+${this.folderMapToString('\t\t\t')}
 		};
 	}
 
