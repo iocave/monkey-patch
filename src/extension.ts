@@ -7,6 +7,14 @@ import { mkdirRecursive } from './fs';
 import { Script } from './script';
 import { PathManager } from './path-manager';
 import { Configuration } from './configuration';
+import { Contribution, FolderMap, API } from './api';
+
+interface Contributions { [key : string] : Contribution; }
+
+interface RegenerateResult {
+	browserModulesChanged : boolean;
+	mainProcessModulesChanged : boolean;
+}
 
 class Extension {
 
@@ -14,7 +22,10 @@ class Extension {
 		this.context = context;
 		this.pathManager = new PathManager(context);
 		this.register();
-		this._regenerate();
+
+		this.loadContributions();
+		this.configurationChanged();
+
 		if (this.active) {
 			this.checkState();
 		}
@@ -23,6 +34,15 @@ class Extension {
 				this.configurationChanged();
 			}
 		}));
+
+		let firstRun = this.context.globalState.get("firstRun");
+		if (firstRun === undefined) {
+			firstRun = true;
+		}
+		if (firstRun && !this.active) {
+			this.enable();
+		}
+		this.context.globalState.update("firstRun", false);
 	}
 
 	private async checkState() {
@@ -63,8 +83,8 @@ class Extension {
 		this.context.subscriptions.push(disposable);
 	}
 
-	get active() {
-		return this.context.globalState.get("active");
+	get active() : boolean {
+		return this.context.globalState.get("active") as boolean;
 	}
 
 	private async enable() {
@@ -91,27 +111,38 @@ class Extension {
 
 		let cfg = vscode.workspace.getConfiguration("monkeyPatch");
 
-		let folderMap = new Map(Object.entries({
+		let folderMap: FolderMap = {
 			"monkey-static": path.join(this.pathManager.extensionDataPath, "modules"),
-		}));
+		};
 
 		let map = cfg.get("folderMap");
 		if (map instanceof Object) {
 			Object.entries(map).forEach(entry => {
-				folderMap.set(entry[0], entry[1]);
+				folderMap[`${entry[0]}`] = `${entry[1]}`;
 			});
 		}
+
+		Object.entries(this.contributions).forEach(([id, contribution]) => {
+			Object.entries(contribution.folderMap).map(([key, value]) => {
+				folderMap[key] = value;
+			});
+		});
 
 		this.configuration.updateFolderMap(folderMap);
 
 		let modules = cfg.get("mainProcessModules");
 
-		let mainProcessModules = new Set(["monkey-static/entrypoint-main"]);
+		let mainProcessModules = ["monkey-static/entrypoint-main"];
 		if (modules instanceof Array) {
 			modules.forEach(element => {
-				mainProcessModules.add(element);
+				mainProcessModules.push(element);
 			});
 		}
+		Object.entries(this.contributions).forEach(([id, contribution]) => {
+			contribution.mainProcessModules.forEach((module) => {
+				mainProcessModules.push(module);
+			});
+		});
 
 		this.configuration.updateMainProcessModules(mainProcessModules);
 
@@ -119,31 +150,35 @@ class Extension {
 
 		modules = cfg.get("browserModules");
 
-		let browserModules = new Set(["monkey-static/entrypoint-browser"]);
+		let browserModules : string[] = [];
 		if (modules instanceof Array) {
 			modules.forEach(element => {
-				browserModules.add(element);
+				browserModules.push(element);
 			});
 		}
+
+		Object.entries(this.contributions).forEach(([id, contribution]) => {
+			contribution.browserModules.forEach((module) => {
+				browserModules.push(module);
+			});
+		});
 
 		this.configuration.updateBrowserModules(browserModules);
 	}
 
-	updateGeneratedFiles() {
-		this.updateConfiguration();
-		this.configuration.writeMainProcessEntrypoint(this.pathManager.mainProcessEntrypointPath);
-		this.configuration.writeBrowserEntrypoint(this.pathManager.browserEntrypointPath);
-	}
 
-	configurationChanged() {
-		let browserModules = this.configuration.resolvedBrowserModules();
-		let mainProcessModules = this.configuration.resolvedMainProcessModules();
-		this.updateConfiguration();
-		this.updateGeneratedFiles();
-		if (!Extension.eqSet(mainProcessModules, this.configuration.resolvedMainProcessModules())) {
-			vscode.window.showInformationMessage("MonkeyPatch configuration has changed. Please RESTART (not just reload) your VSCode instance!", "Okay");
-		} else if (!Extension.eqSet(browserModules, this.configuration.resolvedBrowserModules())) {
-			vscode.window.showInformationMessage("MonkeyPatch configuration has changed. Please reload your VSCode window!", "Okay");
+	async configurationChanged() {
+		let res = this.regenerate();
+
+		if (this.active) {
+			if (res.mainProcessModulesChanged) {
+				vscode.window.showInformationMessage("MonkeyPatch configuration has changed. Please RESTART (not just reload) your VSCode instance!", "Okay");
+			} else if (res.browserModulesChanged) {
+				let res = await vscode.window.showInformationMessage("MonkeyPatch configuration has changed. Please reload your VSCode window!", "Reload", "Later");
+				if (res === "Reload") {
+					vscode.commands.executeCommand("workbench.action.reloadWindow");
+				}
+			}
 		}
 	}
 
@@ -153,20 +188,24 @@ class Extension {
 
 	private async install() {
 		try {
-			this._regenerate();
+			this.regenerate();
 			await this._install();
 			this.context.globalState.update("active", true);
 			await vscode.window.showInformationMessage("MonkeyPatch enabled. Please RESTART (not just reload) your VSCode instance!", "Okay");
-
 		} catch (e) {
 			vscode.window.showErrorMessage(`MonkeyPatch failed: ${e}`);
 		}
 	}
 
-	private _regenerate() {
+	regenerate() : RegenerateResult {
 		mkdirRecursive(this.pathManager.generatedScriptsPath);
 		this.updateConfiguration();
-		this.updateGeneratedFiles();
+		let mainProcess = this.configuration.writeMainProcessEntrypoint(this.pathManager.mainProcessEntrypointPath);
+		let browser = this.configuration.writeBrowserEntrypoint(this.pathManager.browserEntrypointPath);
+		return {
+			mainProcessModulesChanged: mainProcess,
+			browserModulesChanged: browser,
+		};
 	}
 
 	private async _install() {
@@ -229,9 +268,34 @@ class Extension {
 		return needsRoot;
 	}
 
+	contribute(sourceExtensionId: string, contribution: Contribution) {
+		this.contributions[sourceExtensionId] = contribution;
+		this.saveContributions();
+		this.configurationChanged();
+	}
+
+	saveContributions() {
+		this.context.globalState.update("contributions", this.contributions);
+	}
+
+	loadContributions() {
+		let contributions : Contributions|undefined = this.context.globalState.get("contributions");
+		if (contributions !== undefined) {
+			Object.entries(contributions).forEach(([id, contribution]) => {
+				if (vscode.extensions.getExtension(id) !== undefined) {
+					this.contributions[id] = contribution;
+				}
+			});
+		}
+		vscode.extensions.onDidChange(() => {
+			this.configurationChanged();
+		}, this.context.subscriptions);
+	}
+
 	private configuration = new Configuration();
 	private context: vscode.ExtensionContext;
 	private pathManager: PathManager;
+	private contributions : Contributions = {};
 }
 
 
@@ -241,6 +305,16 @@ let extension: Extension;
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 	extension = new Extension(context);
+
+  	let api : API = {
+		contribute(sourceExtensionId: string, contribution: Contribution) {
+			extension.contribute(sourceExtensionId, contribution);
+		},
+		active() : boolean {
+			return extension.active;
+		}
+	};
+	return api;
 }
 
 // this method is called when your extension is deactivated
