@@ -8,6 +8,10 @@
 		"email": "matej.knopp@gmail.com",
 		"name": "Matej Knopp"
 	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/iocave/monkey-patch"
+	},
 	"categories": [
 		"Other"
 	],
