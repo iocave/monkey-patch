@@ -24,7 +24,7 @@ While not the primary purpose, it is possible to use the Monkey Patch extension 
 "monkeyPatch.folderMap": {
     "my-custom-modules" : "~/custom-modules",
 },
-"monkeyPatch.browserModules":[
+"monkeyPatch.browserModules": [
     // Will load "~/custom-modules/browser1.js" in browser process
     "my-custom-modules/browser1"
 ],
