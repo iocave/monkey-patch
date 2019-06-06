@@ -2,7 +2,7 @@
 	"name": "monkey-patch",
 	"displayName": "Monkey Patch",
 	"description": "Inject custom javascript into vscode",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"publisher": "iocave",
 	"author": {
 		"email": "matej.knopp@gmail.com",
@@ -34,8 +34,8 @@
 			}
 		],
 		"configuration": {
-			"type" : "object",
-			"title" : "Monkey Patch",
+			"type": "object",
+			"title": "Monkey Patch",
 			"properties": {
 				"monkeyPatch.folderMap": {
 					"type": "object",
@@ -43,12 +43,12 @@
 					"markdownDescription": "Maps root package name to a folder on disk.\n\nFor example:\n\n ```\n{\n \"mypackage\" : \"~/.vscode/mypackage/\"\n}\n```\n means `require('mypackage/module')` will reference ~/.vscode/mypackage/module.js"
 				},
 				"monkeyPatch.mainProcessModules": {
-					"type" : "array",
+					"type": "array",
 					"title": "Main process modules",
 					"markdownDescription": "Name of modules to be loaded in VSCode main process.\n\nThe modules root packages need to be declared in `monkeyPatch.folderMap`."
 				},
 				"monkeyPatch.browserModules": {
-					"type" : "array",
+					"type": "array",
 					"title": "Browser modules",
 					"markdownDescription": "Name of modules to be loaded in VSCode browser process.\n\nThe modules root packages need to be declared in `monkeyPatch.folderMap`."
 				}
@@ -71,5 +71,10 @@
 	},
 	"dependencies": {
 		"sudo-prompt": "^8.2.5"
+	},
+	"__metadata": {
+		"id": "736c2316-7f4f-4b6a-8e5c-70527d82cf51",
+		"publisherDisplayName": "iocave",
+		"publisherId": "23f4e00e-db63-40fd-9f68-245f064ca7f5"
 	}
 }

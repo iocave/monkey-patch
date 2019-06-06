@@ -13,7 +13,7 @@ export class Script {
         this.script = "";
     }
 
-    private get isWindows() { 
+    private get isWindows() {
         return os.platform() == "win32";
     }
 
@@ -23,24 +23,30 @@ export class Script {
     }
 
     copy(pathFrom: string, pathTo: string) {
-        if (this.isWindows) 
+        if (this.isWindows) {
             this.command(`copy /Y "${pathFrom}" "${pathTo}"`);
-        else
+        }
+        else {
             this.command(`cp "${pathFrom}" "${pathTo}"`);
+        }
     }
 
     move(pathFrom: string, pathTo: string) {
-        if (this.isWindows)
+        if (this.isWindows) {
             this.command(`move "${pathFrom}" "${pathTo}"`);
-        else
+        }
+        else {
             this.command(`mv "${pathFrom}" "${pathTo}"`);
+        }
     }
 
     rm(path: string) {
-        if (this.isWindows)
+        if (this.isWindows) {
             this.command(`del "${path}"`);
-        else
+        }
+        else {
             this.command(`rm "${path}"`);
+        }
     }
 
     template(pathFrom: string, pathTo: string, values: Map<string, string>) {
@@ -74,8 +80,9 @@ export class Script {
                 }
             };
 
-            if (!this.isWindows)
+            if (!this.isWindows) {
                 script = "/bin/sh " + script;
+            }
 
             console.log(`** Executing "${script}", asRoot: ${asRoot}`);
 
