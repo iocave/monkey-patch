@@ -9,11 +9,11 @@ import { PathManager } from './path-manager';
 import { Configuration } from './configuration';
 import { Contribution, FolderMap, API } from './api';
 
-interface Contributions { [key : string] : Contribution; }
+interface Contributions { [key: string]: Contribution; }
 
 interface RegenerateResult {
-	browserModulesChanged : boolean;
-	mainProcessModulesChanged : boolean;
+	browserModulesChanged: boolean;
+	mainProcessModulesChanged: boolean;
 }
 
 class Extension {
@@ -83,7 +83,7 @@ class Extension {
 		this.context.subscriptions.push(disposable);
 	}
 
-	get active() : boolean {
+	get active(): boolean {
 		return this.context.globalState.get("active") as boolean;
 	}
 
@@ -112,8 +112,7 @@ class Extension {
 		let cfg = vscode.workspace.getConfiguration("monkeyPatch");
 
 		let folderMap: FolderMap = {
-			"monkey-static": path.join(this.pathManager.extensionDataPath, "modules"),
-			"monkey-generated" : this.pathManager.generatedScriptsPath,
+			"monkey-generated": this.pathManager.generatedScriptsPath,
 		};
 
 		let map = cfg.get("folderMap");
@@ -133,7 +132,7 @@ class Extension {
 
 		let modules = cfg.get("mainProcessModules");
 
-		let mainProcessModules = ["monkey-static/entrypoint-main"];
+		let mainProcessModules = ["monkey-generated/entrypoint-main"];
 		if (modules instanceof Array) {
 			modules.forEach(element => {
 				mainProcessModules.push(element);
@@ -151,7 +150,7 @@ class Extension {
 
 		modules = cfg.get("browserModules");
 
-		let browserModules : string[] = [];
+		let browserModules: string[] = [];
 		if (modules instanceof Array) {
 			modules.forEach(element => {
 				browserModules.push(element);
@@ -198,8 +197,8 @@ class Extension {
 	}
 
 	// Don't spam notifications
-	private lastMessageTimeMainProcess ?: number;
-	private lastMessageTimeBrowser ?: number;
+	private lastMessageTimeMainProcess?: number;
+	private lastMessageTimeBrowser?: number;
 
 	private static eqSet(s1: Set<any>, s2: Set<any>): boolean {
 		return s1.size === s2.size && [...s1].every(value => s2.has(value));
@@ -216,9 +215,13 @@ class Extension {
 		}
 	}
 
-	regenerate() : RegenerateResult {
+	regenerate(): RegenerateResult {
 		mkdirRecursive(this.pathManager.generatedScriptsPath);
 		this.updateConfiguration();
+
+		fs.copyFileSync(path.join(this.pathManager.extensionDataPath, "modules", "entrypoint-main.js"),
+			path.join(this.pathManager.generatedScriptsPath, "entrypoint-main.js"));
+
 		let mainProcess = this.configuration.writeMainProcessEntrypoint(this.pathManager.mainProcessEntrypointPath);
 		let browserEntrypoint = this.configuration.writeBrowserEntrypoint(this.pathManager.browserEntrypointPath);
 		let browserModules = this.configuration.writeBrowserModules(this.pathManager.browserModulesPath);
@@ -299,7 +302,7 @@ class Extension {
 	}
 
 	loadContributions() {
-		let contributions : Contributions|undefined = this.context.globalState.get("contributions");
+		let contributions: Contributions | undefined = this.context.globalState.get("contributions");
 		if (contributions !== undefined) {
 			Object.entries(contributions).forEach(([id, contribution]) => {
 				if (vscode.extensions.getExtension(id) !== undefined) {
@@ -315,7 +318,7 @@ class Extension {
 	private configuration = new Configuration();
 	private context: vscode.ExtensionContext;
 	private pathManager: PathManager;
-	private contributions : Contributions = {};
+	private contributions: Contributions = {};
 }
 
 
@@ -326,11 +329,11 @@ let extension: Extension;
 export function activate(context: vscode.ExtensionContext) {
 	extension = new Extension(context);
 
-  	let api : API = {
+	let api: API = {
 		contribute(sourceExtensionId: string, contribution: Contribution) {
 			extension.contribute(sourceExtensionId, contribution);
 		},
-		active() : boolean {
+		active(): boolean {
 			return extension.active;
 		}
 	};

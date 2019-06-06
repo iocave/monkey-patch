@@ -27,7 +27,7 @@ export class Configuration {
 	}
 
 	 formatPath(p : string) {
-		if (os.platform() == "win32") {
+		if (os.platform() === "win32") {
 			// There seems to be a weird bug in how AMD loader handles window URLs
 			return "file://./" + p.replace(/\\/g, "/");
 		} else {
