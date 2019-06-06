@@ -58,7 +58,7 @@ exports.load = function (entrypoint, onLoad, onError) {
 	onError = onError || function (err) { console.error(err); };
 
 	loader([entrypoint], function () {
-		if (entrypoint === "vs/code/electron-main/main")
+		if (entrypoint === "vs/code/electron-main/main" || entrypoint === "vs/code/node/cli")
 			loader(["monkey/main"], onLoad, onError);
 		else
 			onLoad(); // extension host
