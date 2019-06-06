@@ -239,7 +239,7 @@ class Extension {
 
 		script.template(path.join(this.pathManager.extensionDataPath, "bootstrap-amd.js"),
 			this.pathManager.bootstrapPath, new Map(Object.entries({
-				"[[MONKEY_PATCH_ROOT]]": this.pathManager.generatedScriptsPath,
+				"[[MONKEY_PATCH_ROOT]]": this.configuration.formatPath(this.pathManager.generatedScriptsPath),
 			})));
 
 		const browserEntryPoint = this.toFileUri(this.pathManager.browserEntrypointPath);

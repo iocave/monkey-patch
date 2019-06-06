@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import { homedir } from 'os';
 import * as path from 'path';
 import { FolderMap } from './api';
+import * as os from 'os';
 
 export class Configuration {
 
@@ -14,7 +15,7 @@ export class Configuration {
 	private folderMapToString(indent: string) {
 		let entries = Object.entries(this.folderMap);
 		entries = entries.sort((a, b) => a[0].localeCompare(b[0]));
-		return entries.map(([key, value]) => `${indent}"${key}" : "${this.expandHome(value)}"`).join(",\n");
+		return entries.map(([key, value]) => `${indent}"${key}" : "${this.formatPath(this.expandHome(value))}"`).join(",\n");
 	}
 
 	private expandHome(p: string) {
@@ -24,6 +25,15 @@ export class Configuration {
 			return p;
 		}
 	}
+
+	 formatPath(p : string) {
+		if (os.platform() == "win32") {
+			// There seems to be a weird bug in how AMD loader handles window URLs
+			return "file://./" + p.replace(/\\/g, "/");
+		} else {
+			return p;
+		}
+	 }
 
 	private mainProcessModulesToString() {
 		return this.filterModules(Array.from(this.mainProcessModules)).map((module) => `"${module}"`).join(", ");
@@ -107,7 +117,7 @@ ${this.folderMapToString('\t\t\t')}
 				err.moduleId.startsWith("vs/") &&
 				err.detail !== undefined &&
 				err.detail.path != undefined &&
-			    err.detail.path.includes(err.moduleId)) {
+			    err.detail.path.replace(/\\\\/g, "/").includes(err.moduleId)) {
 					// ignore; this initially before workbench main gets parsed
 			} else {
 				if (err.errorCode === 'load') {
