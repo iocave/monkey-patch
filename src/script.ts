@@ -13,22 +13,34 @@ export class Script {
         this.script = "";
     }
 
+    private get isWindows() { 
+        return os.platform() == "win32";
+    }
+
     begin() {
         fs.mkdirSync(this.folder);
         this.command(`cd "${this.folder}"`);
-        this.command("cat script.sh");
     }
 
     copy(pathFrom: string, pathTo: string) {
-        this.command(`cp "${pathFrom}" "${pathTo}"`);
+        if (this.isWindows) 
+            this.command(`copy /Y "${pathFrom}" "${pathTo}"`);
+        else
+            this.command(`cp "${pathFrom}" "${pathTo}"`);
     }
 
     move(pathFrom: string, pathTo: string) {
-        this.command(`mv "${pathFrom}" "${pathTo}"`);
+        if (this.isWindows)
+            this.command(`move "${pathFrom}" "${pathTo}"`);
+        else
+            this.command(`mv "${pathFrom}" "${pathTo}"`);
     }
 
     rm(path: string) {
-        this.command(`rm "${path}"`);
+        if (this.isWindows)
+            this.command(`del "${path}"`);
+        else
+            this.command(`rm "${path}"`);
     }
 
     template(pathFrom: string, pathTo: string, values: Map<string, string>) {
@@ -43,7 +55,8 @@ export class Script {
 
     commit(asRoot: boolean) {
         return new Promise<void>((resolve, reject) => {
-            let script = path.join(this.folder, "script.sh");
+            let name = this.isWindows ? "script.cmd" : "script.sh";
+            let script = path.join(this.folder, name);
             fs.writeFileSync(script, this.script);
             const callback = (error: any, stdout: string, stderr: string) => {
                 this.cleanup();
@@ -60,7 +73,9 @@ export class Script {
                     resolve();
                 }
             };
-            script = "/bin/sh " + script;
+
+            if (!this.isWindows)
+                script = "/bin/sh " + script;
 
             console.log(`** Executing "${script}", asRoot: ${asRoot}`);
 
