@@ -8,4 +8,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [0.1.3] - 2019-06-06
 
+- Display restart prompt when needed
+
+## [0.1.3] - 2019-06-06
+
 - Initial release

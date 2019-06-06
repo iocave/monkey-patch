@@ -101,7 +101,10 @@ class Extension {
 		try {
 			await this.uninstall();
 			this.context.globalState.update("active", false);
-			await vscode.window.showInformationMessage("Monkey Patch disabled. Please RESTART (not just reload) your VSCode instance!", "Okay");
+			let res = await vscode.window.showInformationMessage("Monkey Patch disabled. Please RESTART (not just reload) your VSCode instance!", "Restart");
+			if (res === "Restart") {
+				await this.promptRestart();
+			}
 		} catch (e) {
 			vscode.window.showErrorMessage(`Monkey Patch failed: ${e}`);
 		}
@@ -166,6 +169,15 @@ class Extension {
 		this.configuration.updateBrowserModules(browserModules);
 	}
 
+	private async promptRestart() {
+		// This is a hacky way to display the restart prompt
+		let v = vscode.workspace.getConfiguration().inspect("window.titleBarStyle");
+		if (v !== undefined) {
+			let value = vscode.workspace.getConfiguration().get("window.titleBarStyle");
+			await vscode.workspace.getConfiguration().update("window.titleBarStyle", value === "native" ? "custom" : "native", vscode.ConfigurationTarget.Global);
+			vscode.workspace.getConfiguration().update("window.titleBarStyle", v.globalValue, vscode.ConfigurationTarget.Global);
+		}
+	}
 
 	async configurationChanged() {
 		let res = this.regenerate();
@@ -179,7 +191,10 @@ class Extension {
 				}
 
 				this.lastMessageTimeMainProcess = new Date().getTime();
-				vscode.window.showInformationMessage("Monkey Patch configuration has changed. Please RESTART (not just reload) your VSCode instance!", "Okay");
+				let res = await vscode.window.showInformationMessage("Monkey Patch configuration has changed. Please RESTART (not just reload) your VSCode instance!", "Restart");
+				if (res === "Restart") {
+					await this.promptRestart();
+				}
 			} else if (res.browserModulesChanged) {
 
 				let last = this.lastMessageTimeMainProcess || this.lastMessageTimeBrowser;
@@ -188,7 +203,7 @@ class Extension {
 				}
 
 				this.lastMessageTimeBrowser = new Date().getTime();
-				let res = await vscode.window.showInformationMessage("Monkey Patch configuration has changed. Please reload your VSCode window!", "Reload");
+				let res = await vscode.window.showInformationMessage("Monkey Patch configuration has changed. Please RESTART your VSCode window!", "Reload");
 				if (res === "Reload") {
 					vscode.commands.executeCommand("workbench.action.reloadWindow");
 				}
@@ -209,7 +224,10 @@ class Extension {
 			this.regenerate();
 			await this._install();
 			this.context.globalState.update("active", true);
-			await vscode.window.showInformationMessage("Monkey Patch enabled. Please RESTART (not just reload) your VSCode instance!", "Okay");
+			let res = await vscode.window.showInformationMessage("Monkey Patch enabled. Please RESTART (not just reload) your VSCode instance!", "Restart");
+			if (res === "Restart") {
+				await this.promptRestart();
+			}
 		} catch (e) {
 			vscode.window.showErrorMessage(`Monkey Patch failed: ${e}`);
 		}
@@ -337,6 +355,7 @@ export function activate(context: vscode.ExtensionContext) {
 			return extension.active;
 		}
 	};
+
 	return api;
 }
 
