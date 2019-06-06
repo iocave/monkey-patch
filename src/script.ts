@@ -65,7 +65,7 @@ export class Script {
             console.log(`** Executing "${script}", asRoot: ${asRoot}`);
 
             if (asRoot) {
-                let options = { name: 'VSCode MonkeyPatch' };
+                let options = { name: 'VSCode Monkey Patch' };
                 sudo.exec(script, options, callback);
             } else {
                 exec(script, callback);

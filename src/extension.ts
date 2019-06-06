@@ -51,14 +51,14 @@ class Extension {
 				!fs.existsSync(this.pathManager.workbenchHtmlReplacementPath) ||
 				!this.contains(this.pathManager.bootstrapPath, '"monkey"')) {
 
-				let r = await vscode.window.showInformationMessage("MonkeyPatch changes seem to have been overwritten.", "Re-apply", "Ignore");
+				let r = await vscode.window.showInformationMessage("Monkey Patch changes seem to have been overwritten.", "Re-apply", "Ignore");
 				if (r === "Re-apply") {
 					this.install();
 				} else {
 					this.context.globalState.update("active", false);
 				}
 			} else {
-				console.log("MonkeyPatch is active.");
+				console.log("Monkey Patch is active.");
 			}
 		} catch (e) {
 			console.log("Check state failed", e);
@@ -72,12 +72,12 @@ class Extension {
 	}
 
 	private register() {
-		let disposable = vscode.commands.registerCommand('extension.enable', async () => {
+		let disposable = vscode.commands.registerCommand('iocave.monkey-patch.enable', async () => {
 			this.enable();
 		});
 		this.context.subscriptions.push(disposable);
 
-		disposable = vscode.commands.registerCommand('extension.disable', async () => {
+		disposable = vscode.commands.registerCommand('iocave.monkey-patch.disable', async () => {
 			this.disable();
 		});
 		this.context.subscriptions.push(disposable);
@@ -89,7 +89,7 @@ class Extension {
 
 	private async enable() {
 		if (!this.active) {
-			let res = await vscode.window.showInformationMessage("MonkeyPatch will modify certain files within your VSCode installation. In case something goes wrong, you can use the 'Disable MonkeyPatch' command or simply reinstall VSCode.", "Proceed", "Cancel");
+			let res = await vscode.window.showInformationMessage("Monkey Patch will modify certain files within your VSCode installation. In case something goes wrong, you can use the 'Disable Monkey Patch' command or simply reinstall VSCode.", "Proceed", "Cancel");
 			if (res !== "Proceed") {
 				return;
 			}
@@ -101,9 +101,9 @@ class Extension {
 		try {
 			await this.uninstall();
 			this.context.globalState.update("active", false);
-			await vscode.window.showInformationMessage("MonkeyPatch disabled. Please RESTART (not just reload) your VSCode instance!", "Okay");
+			await vscode.window.showInformationMessage("Monkey Patch disabled. Please RESTART (not just reload) your VSCode instance!", "Okay");
 		} catch (e) {
-			vscode.window.showErrorMessage(`MonkeyPatch failed: ${e}`);
+			vscode.window.showErrorMessage(`Monkey Patch failed: ${e}`);
 		}
 	}
 
@@ -113,6 +113,7 @@ class Extension {
 
 		let folderMap: FolderMap = {
 			"monkey-static": path.join(this.pathManager.extensionDataPath, "modules"),
+			"monkey-generated" : this.pathManager.generatedScriptsPath,
 		};
 
 		let map = cfg.get("folderMap");
@@ -172,15 +173,33 @@ class Extension {
 
 		if (this.active) {
 			if (res.mainProcessModulesChanged) {
-				vscode.window.showInformationMessage("MonkeyPatch configuration has changed. Please RESTART (not just reload) your VSCode instance!", "Okay");
+
+				let last = this.lastMessageTimeMainProcess;
+				if (last !== undefined && (new Date().getTime() - last) < 3000) {
+					return;
+				}
+
+				this.lastMessageTimeMainProcess = new Date().getTime();
+				vscode.window.showInformationMessage("Monkey Patch configuration has changed. Please RESTART (not just reload) your VSCode instance!", "Okay");
 			} else if (res.browserModulesChanged) {
-				let res = await vscode.window.showInformationMessage("MonkeyPatch configuration has changed. Please reload your VSCode window!", "Reload", "Later");
+
+				let last = this.lastMessageTimeMainProcess || this.lastMessageTimeBrowser;
+				if (last !== undefined && (new Date().getTime() - last) < 3000) {
+					return;
+				}
+
+				this.lastMessageTimeBrowser = new Date().getTime();
+				let res = await vscode.window.showInformationMessage("Monkey Patch configuration has changed. Please reload your VSCode window!", "Reload");
 				if (res === "Reload") {
 					vscode.commands.executeCommand("workbench.action.reloadWindow");
 				}
 			}
 		}
 	}
+
+	// Don't spam notifications
+	private lastMessageTimeMainProcess ?: number;
+	private lastMessageTimeBrowser ?: number;
 
 	private static eqSet(s1: Set<any>, s2: Set<any>): boolean {
 		return s1.size === s2.size && [...s1].every(value => s2.has(value));
@@ -191,9 +210,9 @@ class Extension {
 			this.regenerate();
 			await this._install();
 			this.context.globalState.update("active", true);
-			await vscode.window.showInformationMessage("MonkeyPatch enabled. Please RESTART (not just reload) your VSCode instance!", "Okay");
+			await vscode.window.showInformationMessage("Monkey Patch enabled. Please RESTART (not just reload) your VSCode instance!", "Okay");
 		} catch (e) {
-			vscode.window.showErrorMessage(`MonkeyPatch failed: ${e}`);
+			vscode.window.showErrorMessage(`Monkey Patch failed: ${e}`);
 		}
 	}
 
@@ -201,10 +220,11 @@ class Extension {
 		mkdirRecursive(this.pathManager.generatedScriptsPath);
 		this.updateConfiguration();
 		let mainProcess = this.configuration.writeMainProcessEntrypoint(this.pathManager.mainProcessEntrypointPath);
-		let browser = this.configuration.writeBrowserEntrypoint(this.pathManager.browserEntrypointPath);
+		let browserEntrypoint = this.configuration.writeBrowserEntrypoint(this.pathManager.browserEntrypointPath);
+		let browserModules = this.configuration.writeBrowserModules(this.pathManager.browserModulesPath);
 		return {
 			mainProcessModulesChanged: mainProcess,
-			browserModulesChanged: browser,
+			browserModulesChanged: browserEntrypoint || browserModules,
 		};
 	}
 

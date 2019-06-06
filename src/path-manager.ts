@@ -40,7 +40,11 @@ export class PathManager {
 	}
 
 	get browserEntrypointPath() {
-		return path.join(this.generatedScriptsPath, "browser.js");
+		return path.join(this.generatedScriptsPath, "browser-entrypoint.js");
+	}
+
+	get browserModulesPath() {
+		return path.join(this.generatedScriptsPath, "browser-modules.js");
 	}
 
 	private context: vscode.ExtensionContext;

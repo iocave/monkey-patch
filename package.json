@@ -1,6 +1,6 @@
 {
 	"name": "monkey-patch",
-	"displayName": "MonkeyPatch",
+	"displayName": "Monkey Patch",
 	"description": "Inject custom javascript into vscode",
 	"version": "0.0.1",
 	"publisher": "iocave",
@@ -21,17 +21,17 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "extension.enable",
-				"title": "Enable MonkeyPatch"
+				"command": "iocave.monkey-patch.enable",
+				"title": "Enable Monkey Patch"
 			},
 			{
-				"command": "extension.disable",
-				"title": "Disable MonkeyPatch"
+				"command": "iocave.monkey-patch.disable",
+				"title": "Disable Monkey Patch"
 			}
 		],
 		"configuration": {
 			"type" : "object",
-			"title" : "MonkeyPatch",
+			"title" : "Monkey Patch",
 			"properties": {
 				"monkeyPatch.folderMap": {
 					"type": "object",

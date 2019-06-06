@@ -11,13 +11,13 @@ export class Configuration {
 		this.folderMap = {};
 	}
 
-	private folderMapToString(indent : string) {
+	private folderMapToString(indent: string) {
 		let entries = Object.entries(this.folderMap);
 		entries = entries.sort((a, b) => a[0].localeCompare(b[0]));
 		return entries.map(([key, value]) => `${indent}"${key}" : "${this.expandHome(value)}"`).join(",\n");
 	}
 
-	private expandHome(p : string) {
+	private expandHome(p: string) {
 		if (p.startsWith("~/")) {
 			return path.join(homedir(), p.slice(2));
 		} else {
@@ -30,12 +30,12 @@ export class Configuration {
 	}
 
 	private browserModulesToString() {
-		return this.filterModules(Array.from(this.browserModules)).map((module) => `modulePaths.push("${module}");`).join("\n\t");
+		return this.filterModules(Array.from(this.browserModules)).map((module) => `"${module}"`).join(", ");
 	}
 
 	// Only include files that exist
-	private filterModules(modules : Array<string>) {
-		return modules.filter((module : string) => {
+	private filterModules(modules: Array<string>) {
+		return modules.filter((module: string) => {
 			let segments = module.split("/");
 			if (segments.length > 1) {
 				if (this.folderMap[segments[0]] !== undefined) {
@@ -59,7 +59,7 @@ export class Configuration {
 		this.browserModules = modules;
 	}
 
-	writeMainProcessEntrypoint(path: string) : boolean {
+	writeMainProcessEntrypoint(path: string): boolean {
 		let data = `\
 require.config({
     paths: {
@@ -72,7 +72,21 @@ define([${this.mainProcessModulesToString()}], function (){});`;
 		return this.replaceFile(path, data);
 	}
 
-	writeBrowserEntrypoint(path: string)  : boolean {
+	writeBrowserModules(path: string): boolean {
+		// write empty module so that the loader doesn't complain, and then
+		// require with all of our modules; We split it so that the entire
+		// loading process doesn't fail if one of our modules can't be found
+		let data = `\
+'use strict';
+
+define([], function(){ });
+
+require([${this.browserModulesToString()}], function() { });
+`;
+		return this.replaceFile(path, data);
+	}
+
+	writeBrowserEntrypoint(path: string): boolean {
 		let data = `\
 'use strict';
 
@@ -118,14 +132,14 @@ ${this.folderMapToString('\t\t\t')}
 		};
 	}
 
-	${this.browserModulesToString()}
+	modulePaths.push("monkey-generated/browser-modules");
 	_prev(modulePaths, resultCallback, options);
 };`;
 
 		return this.replaceFile(path, data);
 	}
 
-	private replaceFile(path: string, data:string) : boolean {
+	private replaceFile(path: string, data: string): boolean {
 		if (fs.existsSync(path)) {
 			let current = fs.readFileSync(path, "utf8");
 			if (current === data) {
