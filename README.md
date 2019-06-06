@@ -20,7 +20,7 @@ Monkey Patch contributes two VSCode commands:
 
 While not the primary purpose, it is possible to use the Monkey Patch extension through options. For example:
 
-```json
+```jsonc
 "monkeyPatch.folderMap": {
     "my-custom-modules" : "~/custom-modules",
 },
