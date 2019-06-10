@@ -14,7 +14,7 @@ export class Script {
     }
 
     private get isWindows() {
-        return os.platform() == "win32";
+        return os.platform() === "win32";
     }
 
     begin() {
