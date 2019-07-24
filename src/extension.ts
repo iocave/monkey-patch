@@ -203,7 +203,7 @@ class Extension {
 				}
 
 				this.lastMessageTimeBrowser = new Date().getTime();
-				let res = await vscode.window.showInformationMessage("Monkey Patch configuration has changed. Please RESTART your VSCode window!", "Reload");
+				let res = await vscode.window.showInformationMessage("Monkey Patch configuration has changed. Please RELOAD your VSCode window!", "Reload");
 				if (res === "Reload") {
 					vscode.commands.executeCommand("workbench.action.reloadWindow");
 				}
@@ -310,6 +310,9 @@ class Extension {
 	}
 
 	contribute(sourceExtensionId: string, contribution: Contribution) {
+		if (vscode.extensions.getExtension(sourceExtensionId) === undefined) {
+			throw new Error(`"${sourceExtensionId}" is not a valid extension id. Make sure you have "publisher" set in your package.json, and pass in "<publisher>.<name>"`);
+		}
 		this.contributions[sourceExtensionId] = contribution;
 		this.saveContributions();
 		this.configurationChanged();
