@@ -34,6 +34,32 @@ While not the primary purpose, it is possible to use the Monkey Patch extension 
 ]
 ```
 
+## Using Monkey Patch through the API
+
+```js
+let monkeyPatch = vscode.extensions.getExtension("iocave.monkey-patch");
+
+if (monkeyPatch !== undefined) {
+    monkeyPatch.exports.contribute("<publisher>.<extension_name>",
+        {
+            folderMap: {
+                "my-custom-modules": path.join(this.context.extensionPath, "custom-modules"),
+            },
+            browserModules: [
+                "my-custom-modules/browser1"
+            ],
+            mainProcessModules: [
+                "my-custom-modules/mainProcess1",
+            ]
+        }
+    );
+} else {
+    vscode.window.showWarningMessage("Monkey Patch extension is not installed. This extension will not work.");
+}
+```
+
+For a full project that uses this, see https://github.com/iocave/customize-ui.
+
 ## If something goes wrong
 
 Monkey Patching can get fragile at times. If VSCode is running, you can unpach VSCode by invoking the "Disable Monkey Patch" command. If VSCode does launch, you can always redownload VSCode and replace the patched instance.
