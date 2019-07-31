@@ -242,10 +242,9 @@ class Extension {
 
 		let mainProcess = this.configuration.writeMainProcessEntrypoint(this.pathManager.mainProcessEntrypointPath);
 		let browserEntrypoint = this.configuration.writeBrowserEntrypoint(this.pathManager.browserEntrypointPath);
-		let browserModules = this.configuration.writeBrowserModules(this.pathManager.browserModulesPath);
 		return {
 			mainProcessModulesChanged: mainProcess,
-			browserModulesChanged: browserEntrypoint || browserModules,
+			browserModulesChanged: browserEntrypoint,
 		};
 	}
 

@@ -82,20 +82,6 @@ define([${this.mainProcessModulesToString()}], function (){});`;
 		return this.replaceFile(path, data);
 	}
 
-	writeBrowserModules(path: string): boolean {
-		// write empty module so that the loader doesn't complain, and then
-		// require with all of our modules; We split it so that the entire
-		// loading process doesn't fail if one of our modules can't be found
-		let data = `\
-'use strict';
-
-define([], function(){ });
-
-require([${this.browserModulesToString()}], function() { });
-`;
-		return this.replaceFile(path, data);
-	}
-
 	writeBrowserEntrypoint(path: string): boolean {
 		let data = `\
 'use strict';
@@ -112,40 +98,19 @@ _bootstrapWindow.load = function(modulePaths, resultCallback, options) {
 		loaderConfig.paths = {
 ${this.folderMapToString('\t\t\t')}
 		};
-		loaderConfig.onError = function(err) {
-			if (err.errorCode === "load" &&
-				err.moduleId.startsWith("vs/") &&
-				err.detail !== undefined &&
-				err.detail.path != undefined &&
-			    err.detail.path.replace(/\\\\/g, "/").includes(err.moduleId)) {
-					// ignore; this initially before workbench main gets parsed
-			} else {
-				if (err.errorCode === 'load') {
-                    console.error('Loading "' + err.moduleId + '" failed');
-                    console.error('Detail: ', err.detail);
-                    if (err.detail && err.detail.stack) {
-                        console.error(err.detail.stack);
-                    }
-                    console.error('Here are the modules that depend on it:');
-                    console.error(err.neededBy);
-                    return;
-                }
-                if (err.errorCode === 'factory') {
-                    console.error('The factory method of "' + err.moduleId + '" has thrown an exception');
-                    console.error(err.detail);
-                    if (err.detail && err.detail.stack) {
-                        console.error(err.detail.stack);
-                    }
-                    return;
-                }
+		require.define("monkey-patch", {
+			load: function (name, req, onload, config) {
+				req([name], function (value) {
+					req([${this.browserModulesToString()}], function() { onload(value); });
+				});
 			}
-		};
+		});
 	}
-
-	modulePaths.push("monkey-generated/browser-modules");
+	if (modulePaths[0] == 'vs/workbench/workbench.main') {
+		modulePaths[0] = 'monkey-patch!' + modulePaths[0];
+	}
 	_prev(modulePaths, resultCallback, options);
 };`;
-
 		return this.replaceFile(path, data);
 	}
 
