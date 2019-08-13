@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.1.7] - 2019-13-08
+
+- Fix compatibility with latest insider build
+
 ## [0.1.6] - 2019-31-07
 
 - Fix compatibility with latest insider build
