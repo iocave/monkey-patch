@@ -106,7 +106,8 @@ ${this.folderMapToString('\t\t\t')}
 			}
 		});
 	}
-	if (modulePaths[0] == 'vs/workbench/workbench.main') {
+	if (modulePaths[0] == 'vs/workbench/workbench.main' ||
+	    modulePaths[0] == 'vs/workbench/workbench.desktop.main') {
 		modulePaths[0] = 'monkey-patch!' + modulePaths[0];
 	}
 	_prev(modulePaths, resultCallback, options);
