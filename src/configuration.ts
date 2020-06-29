@@ -86,7 +86,10 @@ define([${this.mainProcessModulesToString()}], function (){});`;
 		let data = `\
 'use strict';
 
-const _bootstrapWindow = require('../../../../bootstrap-window');
+let _bootstrapWindow = global.MonacoBootstrapWindow;
+if (!_bootstrapWindow)
+	_bootstrapWindow = require('../../../../bootstrap-window');
+
 const _prev = _bootstrapWindow.load;
 
 _bootstrapWindow.load = function(modulePaths, resultCallback, options) {
@@ -101,7 +104,12 @@ ${this.folderMapToString('\t\t\t')}
 		require.define("monkey-patch", {
 			load: function (name, req, onload, config) {
 				req([name], function (value) {
-					req([${this.browserModulesToString()}], function() { onload(value); });
+					req([${this.browserModulesToString()}], function() { 						
+						onload(value); 
+					}, function(error) {
+						console.error(error);
+						onload(value); 
+					});
 				});
 			}
 		});
