@@ -43,6 +43,11 @@ export class Configuration {
 		return this.filterModules(Array.from(this.browserModules)).map((module) => `"${module}"`).join(", ");
 	}
 
+	private folderMapToRegexp() {
+		let entries = Object.keys(this.folderMap);
+		return entries.map((folder) => `^${folder}\\/`).join("|");
+	}
+
 	// Only include files that exist
 	private filterModules(modules: Array<string>) {
 		return modules.filter((module: string) => {
@@ -98,6 +103,7 @@ _bootstrapWindow.load = function(modulePaths, resultCallback, options) {
 	options.beforeLoaderConfig = function(configuration, loaderConfig) {
 		if (prevBeforeLoaderConfig && typeof prevBeforeLoaderConfig === 'function')
 			prevBeforeLoaderConfig(configuration, loaderConfig);
+		loaderConfig.amdModulesPattern = /^vs\\/|${this.folderMapToRegexp()}/;
 		loaderConfig.paths = {
 ${this.folderMapToString('\t\t\t')}
 		};
