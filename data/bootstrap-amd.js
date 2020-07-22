@@ -14,7 +14,7 @@ const nlsConfig = bootstrap.setupNLS();
 
 // Bootstrap: Loader
 loader.config({
-	baseUrl: bootstrap.uriFromPath(__dirname),
+	baseUrl: bootstrap.fileUriFromPath ? bootstrap.fileUriFromPath(__dirname) : bootstrap.uriFromPath(__dirname),
 	catchError: true,
 	nodeRequire: require,
 	nodeMain: __filename,
