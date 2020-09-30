@@ -12,9 +12,18 @@ const bootstrap = require('./bootstrap');
 // Bootstrap: NLS
 const nlsConfig = bootstrap.setupNLS();
 
+// Resolve for code or code-insiders
+const baseUrl = bootstrap.fileUriFromPath
+    // Code - Insiders
+    ? bootstrap.fileUriFromPath(__dirname, {
+        isWindows: "win32" === process.platform,
+    })
+    // Code
+    : bootstrap.uriFromPath(__dirname);
+
 // Bootstrap: Loader
 loader.config({
-	baseUrl: bootstrap.uriFromPath(__dirname),
+	baseUrl,
 	catchError: true,
 	nodeRequire: require,
 	nodeMain: __filename,
