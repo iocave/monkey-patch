@@ -101,6 +101,9 @@ _bootstrapWindow.load = function(modulePaths, resultCallback, options) {
 
 	let prevBeforeLoaderConfig = options.beforeLoaderConfig;
 	options.beforeLoaderConfig = function(configuration, loaderConfig) {
+		if (loaderConfig === undefined) {
+			loaderConfig = configuration;
+		}
 		if (prevBeforeLoaderConfig && typeof prevBeforeLoaderConfig === 'function')
 			prevBeforeLoaderConfig(configuration, loaderConfig);
 		loaderConfig.amdModulesPattern = /^vs\\/|${this.folderMapToRegexp()}/;
