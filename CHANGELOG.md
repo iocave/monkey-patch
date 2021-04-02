@@ -6,13 +6,17 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.1.13] - 2021-04-02
+
+- Fix compatibility with latest insider build
+
 ## [0.1.12] - 2021-02-15
 
 - Fix compatibility with latest insider build
 
 ## [0.1.11] - 2020-09-30
 
-- Fix compatibility with latest insider build (Thanks to disco0 for PR)  
+- Fix compatibility with latest insider build (Thanks to disco0 for PR)
 
 ## [0.1.10] - 2020-07-22
 
