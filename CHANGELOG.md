@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.1.15] - 2021-06-11
+
+- Fix windows compatibility
+
 ## [0.1.14] - 2021-06-11
 
 - Fix compatibility with latest insider build
