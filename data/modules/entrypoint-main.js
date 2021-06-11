@@ -26,7 +26,7 @@ define([], function () {
         _overrideURL(win);
     }, function (error) { });
 
-    require(["vs/code/electron-main/protocol", "vs/base/common/uri"], function(protocol, uri) {
+    require(["vs/code/electron-main/protocol", "vs/base/common/uri"], function (protocol, uri) {
         _override(protocol.FileProtocolHandler, "handleFileRequest", function (original) {
             if (!updatedRoot) {
                 updatedRoot = true;
@@ -43,7 +43,7 @@ define([], function () {
 
     require(["vs/base/common/network"], function (network) {
         let orig = network.FileAccess.asBrowserUri;
-        network.FileAccess.asBrowserUri = function(url, m) {
+        network.FileAccess.asBrowserUri = function (url, m) {
             url = url.replace("workbench.html", "workbench-monkey-patch.html");
             let res = orig.apply(this, [url, m]);
             return res;
