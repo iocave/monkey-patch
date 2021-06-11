@@ -21,6 +21,7 @@ class Extension {
 	constructor(context: vscode.ExtensionContext) {
 		this.context = context;
 		this.pathManager = new PathManager(context);
+		this.configuration = new Configuration(this.pathManager);
 		this.register();
 
 		this.loadContributions();
@@ -48,7 +49,7 @@ class Extension {
 	private async checkState() {
 		try {
 			if (!fs.existsSync(this.pathManager.bootstrapBackupPath) ||
-				!fs.existsSync(this.pathManager.workbenchHtmlReplacementPath) ||
+				!this.workbenchHtmlReplacementIsValid() ||
 				!this.contains(this.pathManager.bootstrapPath, '"monkey"')) {
 
 				let r = await vscode.window.showInformationMessage("Monkey Patch changes seem to have been overwritten.", "Re-apply", "Ignore");
@@ -69,6 +70,21 @@ class Extension {
 	private contains(filePath: string, searchFor: string) {
 		let content = fs.readFileSync(filePath, "utf8");
 		return content.indexOf(searchFor) !== -1;
+	}
+
+	private workbenchHtmlReplacementIsValid() {
+		if (!fs.existsSync(this.pathManager.workbenchHtmlReplacementPath)) {
+			return false;
+		}
+		let original = fs.readFileSync(this.pathManager.workbenchHtmlPath, "utf8");
+		const replacement = fs.readFileSync(this.pathManager.workbenchHtmlReplacementPath, "utf8");
+
+		const values = this._workbenchHtmlTemplateEntries();
+		values.forEach((value: string, key: string) => {
+			original = original.replace(`${key}`, value);
+		});
+
+		return original == replacement;
 	}
 
 	private register() {
@@ -248,6 +264,18 @@ class Extension {
 		};
 	}
 
+	private _workbenchHtmlTemplateEntries(): Map<string, string> {
+		const browserEntryPoint = this.pathManager.browserEntrypointPath;
+		const htmlPath = this.pathManager.workbenchHtmlPath;
+		const relative = path.relative(path.dirname(htmlPath), browserEntryPoint);
+
+		return new Map(Object.entries({
+			"<script src=\"workbench.js\"></script>":
+				`<script src=\"${relative}\"></script>` +
+				"\n\t<script src=\"workbench.js\"></script>"
+		}));
+	}
+
 	private async _install() {
 
 		let script = new Script();
@@ -262,15 +290,9 @@ class Extension {
 				"[[MONKEY_PATCH_ROOT]]": this.configuration.formatPath(this.pathManager.generatedScriptsPath),
 			})));
 
-		const browserEntryPoint = this.toFileUri(this.pathManager.browserEntrypointPath);
-
 		script.template(this.pathManager.workbenchHtmlPath,
 			this.pathManager.workbenchHtmlReplacementPath,
-			new Map(Object.entries({
-				"<script src=\"workbench.js\"></script>":
-					`<script src=\"${browserEntryPoint}\"></script>` +
-					"\n\t<script src=\"workbench.js\"></script>",
-			})));
+			this._workbenchHtmlTemplateEntries());
 
 		return script.commit(this.needsRoot());
 	}
@@ -335,10 +357,10 @@ class Extension {
 		}, this.context.subscriptions);
 	}
 
-	private configuration = new Configuration();
 	private context: vscode.ExtensionContext;
 	private pathManager: PathManager;
 	private contributions: Contributions = {};
+	private configuration: Configuration;
 }
 
 

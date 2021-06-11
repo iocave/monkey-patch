@@ -3,19 +3,22 @@ import { homedir } from 'os';
 import * as path from 'path';
 import { FolderMap } from './api';
 import * as os from 'os';
+import { PathManager } from './path-manager';
 
 export class Configuration {
 
-	constructor() {
+	constructor(pathManager: PathManager) {
 		this.browserModules = new Array<string>();
 		this.mainProcessModules = new Array<string>();
 		this.folderMap = {};
+		this.pathManager = pathManager;
 	}
 
-	private folderMapToString(indent: string) {
+	private folderMapToString(indent: string, relative = false) {
 		let entries = Object.entries(this.folderMap);
 		entries = entries.sort((a, b) => a[0].localeCompare(b[0]));
-		return entries.map(([key, value]) => `${indent}"${key}" : "${this.formatPath(this.expandHome(value))}"`).join(",\n");
+		let prefix = relative ? path.relative(path.dirname(this.pathManager.workbenchHtmlPath), "/") : "";		
+		return entries.map(([key, value]) => `${indent}"${key}" : "${prefix}${this.formatPath(this.expandHome(value))}"`).join(",\n");
 	}
 
 	private expandHome(p: string) {
@@ -26,14 +29,14 @@ export class Configuration {
 		}
 	}
 
-	 formatPath(p : string) {
+	formatPath(p: string) {
 		if (os.platform() === "win32") {
 			// There seems to be a weird bug in how AMD loader handles window URLs
 			return "file://./" + p.replace(/\\/g, "/");
 		} else {
 			return p;
 		}
-	 }
+	}
 
 	private mainProcessModulesToString() {
 		return this.filterModules(Array.from(this.mainProcessModules)).map((module) => `"${module}"`).join(", ");
@@ -105,10 +108,10 @@ _bootstrapWindow.load = function(modulePaths, resultCallback, options) {
 			loaderConfig = configuration;
 		}
 		if (prevBeforeLoaderConfig && typeof prevBeforeLoaderConfig === 'function')
-			prevBeforeLoaderConfig(configuration, loaderConfig);
+			prevBeforeLoaderConfig(configuration, loaderConfig); 
 		loaderConfig.amdModulesPattern = /^vs\\/|${this.folderMapToRegexp()}/;
 		loaderConfig.paths = {
-${this.folderMapToString('\t\t\t')}
+${this.folderMapToString('\t\t\t', true)}
 		};
 		require.define("monkey-patch", {
 			load: function (name, req, onload, config) {
@@ -146,4 +149,5 @@ ${this.folderMapToString('\t\t\t')}
 	private browserModules: Array<string>;
 	private mainProcessModules: Array<string>;
 	private folderMap: FolderMap;
+	private pathManager: PathManager;
 }
