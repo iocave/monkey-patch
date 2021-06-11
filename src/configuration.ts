@@ -17,8 +17,7 @@ export class Configuration {
 	private folderMapToString(indent: string, relative = false) {
 		let entries = Object.entries(this.folderMap);
 		entries = entries.sort((a, b) => a[0].localeCompare(b[0]));
-		let prefix = relative ? path.relative(path.dirname(this.pathManager.workbenchHtmlPath), "/") : "";		
-		return entries.map(([key, value]) => `${indent}"${key}" : "${prefix}${this.formatPath(this.expandHome(value))}"`).join(",\n");
+		return entries.map(([key, value]) => `${indent}"${key}" : "${this.formatPath(this.expandHome(value), relative)}"`).join(",\n");
 	}
 
 	private expandHome(p: string) {
@@ -29,12 +28,16 @@ export class Configuration {
 		}
 	}
 
-	formatPath(p: string) {
-		if (os.platform() === "win32") {
-			// There seems to be a weird bug in how AMD loader handles window URLs
-			return "file://./" + p.replace(/\\/g, "/");
+	formatPath(p: string, relative = false) {
+		if (relative) {
+			return path.relative(this.pathManager.installationPath, p).replace(/\\/g, '/');
 		} else {
-			return p;
+			if (os.platform() === "win32") {
+				// There seems to be a weird bug in how AMD loader handles window URLs
+				return "file://./" + p.replace(/\\/g, "/");
+			} else {
+				return p;
+			}
 		}
 	}
 
