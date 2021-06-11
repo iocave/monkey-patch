@@ -15,6 +15,11 @@
 	"categories": [
 		"Other"
 	],
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": true
+		}
+	},
 	"engines": {
 		"vscode": "^1.31.0"
 	},
