@@ -119,11 +119,11 @@ ${this.folderMapToString('\t\t\t', true)}
 		require.define("monkey-patch", {
 			load: function (name, req, onload, config) {
 				req([name], function (value) {
-					req([${this.browserModulesToString()}], function() { 						
-						onload(value); 
+					req([${this.browserModulesToString()}], function() {
+						onload(value);
 					}, function(error) {
 						console.error(error);
-						onload(value); 
+						onload(value);
 					});
 				});
 			}
