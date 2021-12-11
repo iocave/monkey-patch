@@ -111,11 +111,14 @@ _bootstrapWindow.load = function(modulePaths, resultCallback, options) {
 			loaderConfig = configuration;
 		}
 		if (prevBeforeLoaderConfig && typeof prevBeforeLoaderConfig === 'function')
-			prevBeforeLoaderConfig(configuration, loaderConfig); 
-		loaderConfig.amdModulesPattern = /^vs\\/|${this.folderMapToRegexp()}/;
-		loaderConfig.paths = {
+			prevBeforeLoaderConfig(configuration, loaderConfig);
+		let prevPattern = loaderConfig.amdModulesPattern;
+		let additionalPattern = /${this.folderMapToRegexp()}/;
+		let joined = prevPattern.toString().slice(1, -1) + additionalPattern.toString().slice(1, -1);
+		loaderConfig.amdModulesPattern = new RegExp(joined);
+		Object.assign(loaderConfig.paths, {
 ${this.folderMapToString('\t\t\t', true)}
-		};
+		});
 		require.define("monkey-patch", {
 			load: function (name, req, onload, config) {
 				req([name], function (value) {
