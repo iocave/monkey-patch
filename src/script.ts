@@ -24,19 +24,19 @@ export class Script {
 
     copy(pathFrom: string, pathTo: string) {
         if (this.isWindows) {
-            this.command(`copy /Y "${this.folder}\\${pathFrom}" "${pathTo}"`);
+            this.command(`copy /Y "${path.join(this.folder, pathFrom)}" "${pathTo}"`);
         }
         else {
-            this.command(`cp "${this.folder}\\${pathFrom}" "${pathTo}"`);
+            this.command(`cp "${path.join(this.folder, pathFrom)}" "${pathTo}"`);
         }
     }
 
     move(pathFrom: string, pathTo: string) {
         if (this.isWindows) {
-            this.command(`move "${this.folder}\\${pathFrom}" "${pathTo}"`);
+            this.command(`move "${path.join(this.folder, pathFrom)}" "${pathTo}"`);
         }
         else {
-            this.command(`mv "${this.folder}\\${pathFrom}" "${pathTo}"`);
+            this.command(`mv "${path.join(this.folder, pathFrom)}" "${pathTo}"`);
         }
     }
 
