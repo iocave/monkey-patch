@@ -21,11 +21,11 @@ export class PathManager {
 	}
 
 	get workbenchHtmlPath() {
-		let res = path.join(this.installationPath, "vs/code/electron-sandbox/workbench/workbench.html");
-		if (fs.existsSync(res)) { // vscode 1.7
+		let res = path.join(this.installationPath, "vs/code/electron-browser/workbench/workbench.html");
+		if (fs.existsSync(res)) {
 			return res;
-		} else {
-			return path.join(this.installationPath, "vs/code/electron-browser/workbench/workbench.html");
+		} else { // vscode 1.70
+			return path.join(this.installationPath, "vs/code/electron-sandbox/workbench/workbench.html")
 		}
 	}
 
