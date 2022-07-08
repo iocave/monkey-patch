@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.1.18] - 2021-07-08
+
+- Fix regression with stable 1.69
+
 ## [0.1.17] - 2021-07-08
 
 - Fix compaitibility with insiders 1.70
