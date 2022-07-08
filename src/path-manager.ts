@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
 
 export class PathManager {
 
@@ -20,11 +21,18 @@ export class PathManager {
 	}
 
 	get workbenchHtmlPath() {
-		return path.join(this.installationPath, "vs/code/electron-browser/workbench/workbench.html");
+		let res = path.join(this.installationPath, "vs/code/electron-sandbox/workbench/workbench.html");
+		if (fs.existsSync(res)) { // vscode 1.7
+			return res;
+		} else {
+			return path.join(this.installationPath, "vs/code/electron-browser/workbench/workbench.html");
+		}
 	}
 
 	get workbenchHtmlReplacementPath() {
-		return path.join(this.installationPath, "vs/code/electron-browser/workbench/workbench-monkey-patch.html");
+		let res = this.workbenchHtmlPath;
+		res = res.replace("workbench.html", "workbench-monkey-patch.html");
+		return res;
 	}
 
 	get extensionDataPath() {
