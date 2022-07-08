@@ -6,6 +6,14 @@ import * as path from 'path';
 import * as os from 'os';
 import { v4 } from './uuid';
 
+function join(p1 : string, p2: string) : string {
+    if (path.isAbsolute(p2)) {
+        return p2;
+    } else {
+        return path.join(p1, p2);
+    }
+}
+
 export class Script {
 
     constructor() {
@@ -24,19 +32,19 @@ export class Script {
 
     copy(pathFrom: string, pathTo: string) {
         if (this.isWindows) {
-            this.command(`copy /Y "${path.join(this.folder, pathFrom)}" "${pathTo}"`);
+            this.command(`copy /Y "${join(this.folder, pathFrom)}" "${pathTo}"`);
         }
         else {
-            this.command(`cp "${path.join(this.folder, pathFrom)}" "${pathTo}"`);
+            this.command(`cp "${join(this.folder, pathFrom)}" "${pathTo}"`);
         }
     }
 
     move(pathFrom: string, pathTo: string) {
         if (this.isWindows) {
-            this.command(`move "${path.join(this.folder, pathFrom)}" "${pathTo}"`);
+            this.command(`move "${join(this.folder, pathFrom)}" "${pathTo}"`);
         }
         else {
-            this.command(`mv "${path.join(this.folder, pathFrom)}" "${pathTo}"`);
+            this.command(`mv "${join(this.folder, pathFrom)}" "${pathTo}"`);
         }
     }
 
