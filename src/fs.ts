@@ -25,8 +25,8 @@ export function rimrafUnlink(path: string) {
 
             return fs.unlinkSync(path);
         }
-    } catch (error : any) {
-        if (error.code !== 'ENOENT') {
+    } catch (error) {
+        if ((error as any).code !== 'ENOENT') {
             throw error;
         }
     }
