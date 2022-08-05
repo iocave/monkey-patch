@@ -97,6 +97,10 @@ define([${this.mainProcessModulesToString()}], function (){});`;
 		let data = `\
 'use strict';
 
+if (window.global === undefined && window.globalThis !== undefined) {
+	window.global = window.globalThis;
+}
+
 let _bootstrapWindow = global.MonacoBootstrapWindow;
 if (!_bootstrapWindow)
 	_bootstrapWindow = require('../../../../bootstrap-window');
@@ -112,10 +116,12 @@ _bootstrapWindow.load = function(modulePaths, resultCallback, options) {
 		}
 		if (prevBeforeLoaderConfig && typeof prevBeforeLoaderConfig === 'function')
 			prevBeforeLoaderConfig(configuration, loaderConfig);
-		let prevPattern = loaderConfig.amdModulesPattern;
-		let additionalPattern = /${this.folderMapToRegexp()}/;
-		let joined = prevPattern.toString().slice(1, -1) + additionalPattern.toString().slice(1, -1);
-		loaderConfig.amdModulesPattern = new RegExp(joined);
+		if (loaderConfig.amdModulesPattern !== undefined) {
+			let prevPattern = loaderConfig.amdModulesPattern;
+			let additionalPattern = /${this.folderMapToRegexp()}/;
+			let joined = prevPattern.toString().slice(1, -1) + additionalPattern.toString().slice(1, -1);
+			loaderConfig.amdModulesPattern = new RegExp(joined);
+		}
 		Object.assign(loaderConfig.paths, {
 ${this.folderMapToString('\t\t\t', true)}
 		});
