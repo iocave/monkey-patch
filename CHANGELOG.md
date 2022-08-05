@@ -6,7 +6,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
-## [0.1.19] - 2022-08-5
+## [0.1.19] - 2022-08-05
 
 - Fix compatibility with 1.70-insiders
 
