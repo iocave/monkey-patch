@@ -281,8 +281,16 @@ class Extension {
 		let script = new Script();
 		script.begin();
 
-		if (!fs.existsSync(this.pathManager.bootstrapBackupPath)) {
+		if (!fs.existsSync(this.pathManager.bootstrapBackupPath) ||
+			!this.contains(this.pathManager.bootstrapBackupPath, "monkey/main")) {
 			script.copy(this.pathManager.bootstrapPath, this.pathManager.bootstrapBackupPath);
+		}
+
+		if (this.contains(this.pathManager.mainJsPath, "require_bootstrap_amd()")) {
+			script.copy(this.pathManager.mainJsPath, this.pathManager.mainJsBackupPath);
+			script.template(this.pathManager.mainJsPath, this.pathManager.mainJsPath, new Map(Object.entries({
+				"require_bootstrap_amd()": "require('./bootstrap-amd')",
+			})));
 		}
 
 		script.template(path.join(this.pathManager.extensionDataPath, "bootstrap-amd.js"),
@@ -314,6 +322,12 @@ class Extension {
 			script.rm(this.pathManager.bootstrapPath);
 			script.move(this.pathManager.bootstrapBackupPath, this.pathManager.bootstrapPath);
 			script.rm(this.pathManager.workbenchHtmlReplacementPath);
+
+			if (fs.existsSync(this.pathManager.mainJsBackupPath)) {
+				script.rm(this.pathManager.mainJsPath);
+				script.move(this.pathManager.mainJsBackupPath, this.pathManager.mainJsPath);
+			}
+
 			return script.commit(this.needsRoot());
 		}
 	}

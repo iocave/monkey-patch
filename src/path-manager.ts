@@ -20,6 +20,14 @@ export class PathManager {
 		return path.join(this.installationPath, "bootstrap-amd.js.monkey-patch.backup");
 	}
 
+	get mainJsPath() {
+		return path.join(this.installationPath, "main.js");
+	}
+
+	get mainJsBackupPath() {
+		return path.join(this.installationPath, "main.js.monkey-patch-backup");
+	}
+
 	get workbenchHtmlPath() {
 		let res = path.join(this.installationPath, "vs/code/electron-browser/workbench/workbench.html");
 		if (fs.existsSync(res)) {
