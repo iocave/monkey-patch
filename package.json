@@ -2,7 +2,7 @@
 	"name": "monkey-patch",
 	"displayName": "Monkey Patch",
 	"description": "Inject custom javascript into vscode",
-	"version": "0.1.19",
+	"version": "0.1.20",
 	"publisher": "iocave",
 	"author": {
 		"email": "matej.knopp@gmail.com",
@@ -21,9 +21,11 @@
 		}
 	},
 	"engines": {
-		"vscode": "^1.31.0"
+		"vscode": "^1.71.2"
 	},
-	"extensionKind": "ui",
+	"extensionKind": [
+		"ui"
+	],
 	"activationEvents": [
 		"*"
 	],
