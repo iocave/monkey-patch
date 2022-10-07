@@ -50,7 +50,7 @@ class Extension {
 		try {
 			if (!fs.existsSync(this.pathManager.bootstrapBackupPath) ||
 				!this.workbenchHtmlReplacementIsValid() ||
-				!this.contains(this.pathManager.bootstrapPath, '"monkey"')) {
+				!this.contains(this.pathManager.bootstrapPath, '[MonkeyPatchBootstrapToken1]')) {
 
 				let r = await vscode.window.showInformationMessage("Monkey Patch changes seem to have been overwritten.", "Re-apply", "Ignore");
 				if (r === "Re-apply") {

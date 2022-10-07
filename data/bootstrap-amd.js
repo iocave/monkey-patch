@@ -63,13 +63,28 @@ exports.load = function (entrypoint, onLoad, onError) {
 		});
 	}
 
-	onLoad = onLoad || function () { };
-	onError = onError || function (err) { console.error(err); };
+	// It's  bit difficult to determine what's the correct time to load
+	// monkey-patch. If loaded before main, startup will fail because AMD
+	// loader won't find modules from main.js, if too late, monkey patch won't
+	// be able to overrride main window URL.
+	// The best approach for now seem to be to load monkey patch immediately
+	// after the main.js file is read.
+	if (entrypoint === "vs/code/electron-main/main") {
+		let fs = require('fs');
+		let readFile = fs.readFile;
+		fs.readFile = function (path, options, callback) {
+			readFile(path, options, function () {
+				if (path.endsWith('electron-main/main.js')) {
+					console.log('Loading monkey-patch');
+					loader(["monkey/main"], function() {}, function(err) { console.log(err); });
+				}
+				callback.apply(this, arguments);
+			});
+		}
+	}
 
-	loader([entrypoint], function () {
-		if (entrypoint === "vs/code/electron-main/main")
-			loader(["monkey/main"], onLoad, onError);
-		else
-			onLoad(); // extension host
-	}, onError);
+	loader([entrypoint], onLoad, onError);
 };
+
+// checked by extension.ts, update if boostrap changes
+// [MonkeyPatchBootstrapToken1]
