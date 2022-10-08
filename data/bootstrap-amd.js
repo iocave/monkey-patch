@@ -71,10 +71,11 @@ exports.load = function (entrypoint, onLoad, onError) {
 	// after the main.js file is read.
 	if (entrypoint === "vs/code/electron-main/main") {
 		let fs = require('fs');
+		let p = require('path');
 		let readFile = fs.readFile;
 		fs.readFile = function (path, options, callback) {
 			readFile(path, options, function () {
-				if (path.endsWith('electron-main/main.js')) {
+				if (path.endsWith(p.join('electron-main', 'main.js'))) {
 					console.log('Loading monkey-patch');
 					loader(["monkey/main"], function() {}, function(err) { console.log(err); });
 				}
@@ -87,4 +88,4 @@ exports.load = function (entrypoint, onLoad, onError) {
 };
 
 // checked by extension.ts, update if boostrap changes
-// [MonkeyPatchBootstrapToken1]
+// [MonkeyPatchBootstrapToken2]
