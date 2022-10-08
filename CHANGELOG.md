@@ -6,6 +6,10 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.1.23] - 2022-10-08
+
+- Fix compatibiltiy with VSCode 1.72 on Windows
+
 ## [0.1.22] - 2022-10-07
 
 - Fix compatibiltiy with VSCode 1.72
