@@ -6,6 +6,18 @@
 //@ts-check
 'use strict';
 
+// Store the node.js require function in a variable
+// before loading our AMD loader to avoid issues
+// when this file is bundled with other files.
+const nodeRequire = require;
+
+// VSCODE_GLOBALS: node_modules
+globalThis._VSCODE_NODE_MODULES = new Proxy(Object.create(null), { get: (_target, mod) => nodeRequire(String(mod)) });
+
+// VSCODE_GLOBALS: package/product.json
+globalThis._VSCODE_PRODUCT_JSON = require('../product.json');
+globalThis._VSCODE_PACKAGE_JSON = require('../package.json');
+
 const loader = require('./vs/loader');
 const bootstrap = require('./bootstrap');
 
@@ -25,7 +37,7 @@ const baseUrl = bootstrap.fileUriFromPath
 loader.config({
 	baseUrl,
 	catchError: true,
-	nodeRequire: require,
+	nodeRequire,
 	nodeMain: __filename,
 	'vs/nls': nlsConfig,
 	paths : {
@@ -70,8 +82,8 @@ exports.load = function (entrypoint, onLoad, onError) {
 	// The best approach for now seem to be to load monkey patch immediately
 	// after the main.js file is read.
 	if (entrypoint === "vs/code/electron-main/main") {
-		let fs = require('fs');
-		let p = require('path');
+		let fs = nodeRequire('fs');
+		let p = nodeRequire('path');
 		let readFile = fs.readFile;
 		fs.readFile = function (path, options, callback) {
 			readFile(path, options, function () {
