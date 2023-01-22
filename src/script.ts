@@ -109,7 +109,7 @@ export class Script {
 
     command(line: string) {
         this.script += line;
-        this.script += "\n";
+        this.script += this.isWindows ? "\r\n" : "\n";
     }
 
     private folder: string;
