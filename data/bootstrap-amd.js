@@ -12,7 +12,9 @@
 const nodeRequire = require;
 
 // VSCODE_GLOBALS: node_modules
-globalThis._VSCODE_NODE_MODULES = new Proxy(Object.create(null), { get: (_target, mod) => nodeRequire(String(mod)) });
+globalThis._VSCODE_NODE_MODULES = new Proxy(Object.create(null), {
+	get: (_target, mod) => nodeRequire(String(mod))
+});
 
 // VSCODE_GLOBALS: package/product.json
 globalThis._VSCODE_PRODUCT_JSON = require('../product.json');
@@ -20,6 +22,7 @@ globalThis._VSCODE_PACKAGE_JSON = require('../package.json');
 
 const loader = require('./vs/loader');
 const bootstrap = require('./bootstrap');
+const performance = require('./vs/base/common/performance');
 
 // Bootstrap: NLS
 const nlsConfig = bootstrap.setupNLS();
@@ -40,6 +43,9 @@ loader.config({
 	nodeRequire,
 	nodeMain: __filename,
 	'vs/nls': nlsConfig,
+	// The extension doesn't work when this is enabled:
+	// amdModulesPattern: /^vs\//,
+	recordStats: true,
 	paths : {
 		"monkey": "[[MONKEY_PATCH_ROOT]]",
 	}
@@ -54,9 +60,9 @@ if (process.env['ELECTRON_RUN_AS_NODE'] || process.versions['electron']) {
 }
 
 // Pseudo NLS support
-if (nlsConfig.pseudo) {
+if (nlsConfig?.pseudo) {
 	loader(['vs/nls'], function (nlsPlugin) {
-		nlsPlugin.setPseudoTranslation(nlsConfig.pseudo);
+		nlsPlugin.setPseudoTranslation(Boolean(nlsConfig.pseudo));
 	});
 }
 
@@ -78,7 +84,7 @@ exports.load = function (entrypoint, onLoad, onError) {
 	// It's  bit difficult to determine what's the correct time to load
 	// monkey-patch. If loaded before main, startup will fail because AMD
 	// loader won't find modules from main.js, if too late, monkey patch won't
-	// be able to overrride main window URL.
+	// be able to override main window URL.
 	// The best approach for now seem to be to load monkey patch immediately
 	// after the main.js file is read.
 	if (entrypoint === "vs/code/electron-main/main") {
@@ -96,8 +102,9 @@ exports.load = function (entrypoint, onLoad, onError) {
 		}
 	}
 
+	performance.mark('code/fork/willLoadCode');
 	loader([entrypoint], onLoad, onError);
 };
 
-// checked by extension.ts, update if boostrap changes
+// checked by extension.ts, update if bootstrap changes
 // [MonkeyPatchBootstrapToken2]
